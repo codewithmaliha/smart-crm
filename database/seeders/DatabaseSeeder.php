@@ -15,11 +15,45 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Admin
+        User::create([
+            'name' => 'Admin User',
+            'email' => 'admin@brand.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+        ]);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Staff
+        User::create([
+            'name' => 'Staff User',
+            'email' => 'staff@brand.com',
+            'password' => bcrypt('password'),
+            'role' => 'staff',
+        ]);
+
+        // Student
+        User::create([
+            'name' => 'Student User',
+            'email' => 'student@brand.com',
+            'password' => bcrypt('password'),
+            'role' => 'student',
+        ]);
+
+        // Seed University and Course
+        $uni = \App\Models\University::create([
+            'name' => 'Global Tech University',
+            'country' => 'United Kingdom',
+            'website' => 'https://globaltech.edu',
+            'description' => 'A leading university in technology.',
+        ]);
+
+        \App\Models\Course::create([
+            'university_id' => $uni->id,
+            'name' => 'MSc Computer Science',
+            'level' => 'Postgraduate',
+            'intake' => 'Sep 2025',
+            'tuition_fee' => 15000.00,
+            'duration' => '1 Year',
         ]);
     }
 }
