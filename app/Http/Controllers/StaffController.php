@@ -10,7 +10,14 @@ class StaffController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Application::with(['user', 'course.university'])->latest();
+        $query = Application::with(['user', 'course.university'])
+            ->withCount([
+                'documents',
+                'documents as approved_documents_count' => function ($query) {
+                    $query->where('status', 'Approved');
+                }
+            ])
+            ->latest();
 
         if ($request->filled('search') || $request->filled('global_search')) {
             $search = $request->search ?? $request->global_search;

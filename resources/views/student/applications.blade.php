@@ -34,7 +34,9 @@
                             <th class="px-8 py-5 text-left text-[10px] font-bold text-secondary-400 uppercase tracking-widest">Course Information</th>
                             <th class="px-8 py-5 text-left text-[10px] font-bold text-secondary-400 uppercase tracking-widest">University</th>
                             <th class="px-8 py-5 text-left text-[10px] font-bold text-secondary-400 uppercase tracking-widest">Date Applied</th>
+                            <th class="px-8 py-5 text-left text-[10px] font-bold text-secondary-400 uppercase tracking-widest">Progress</th>
                             <th class="px-8 py-5 text-left text-[10px] font-bold text-secondary-400 uppercase tracking-widest">Application Status</th>
+                            <th class="px-8 py-5 text-right text-[10px] font-bold text-secondary-400 uppercase tracking-widest">Action</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-secondary-50">
@@ -56,6 +58,17 @@
                                     {{ $application->created_at->format('M d, Y') }}
                                 </td>
                                 <td class="px-8 py-6 whitespace-nowrap">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-24 bg-secondary-100 rounded-full h-1.5 overflow-hidden">
+                                            @php
+                                                $progress = ($application->approved_documents_count / 19) * 100;
+                                            @endphp
+                                            <div class="bg-primary-500 h-1.5 rounded-full transition-all duration-1000" style="width: {{ $progress }}%"></div>
+                                        </div>
+                                        <span class="text-[10px] font-bold text-secondary-600">{{ $application->documents_count }}/19</span>
+                                    </div>
+                                </td>
+                                <td class="px-8 py-6 whitespace-nowrap">
                                     @php
                                         $statusStyles = [
                                             'Pending' => 'bg-amber-100 text-amber-700',
@@ -71,6 +84,9 @@
                                     <span class="inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest {{ $style }} shadow-sm">
                                         {{ $application->status }}
                                     </span>
+                                </td>
+                                <td class="px-8 py-6 whitespace-nowrap text-right">
+                                    <a href="{{ route('student.applications.show', $application) }}" class="btn-primary py-2 px-4 text-[10px] font-bold uppercase tracking-widest shadow-none">Track Status</a>
                                 </td>
                             </tr>
                         @empty

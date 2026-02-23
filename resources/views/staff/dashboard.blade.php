@@ -50,6 +50,7 @@
                             <th class="px-8 py-4 text-left text-[10px] font-bold text-secondary-400 uppercase tracking-widest">Student info</th>
                             <th class="px-8 py-4 text-left text-[10px] font-bold text-secondary-400 uppercase tracking-widest">Course Detail</th>
                             <th class="px-8 py-4 text-left text-[10px] font-bold text-secondary-400 uppercase tracking-widest">Date Applied</th>
+                            <th class="px-8 py-4 text-left text-[10px] font-bold text-secondary-400 uppercase tracking-widest">Documents</th>
                             <th class="px-8 py-4 text-left text-[10px] font-bold text-secondary-400 uppercase tracking-widest">Current Status</th>
                             <th class="px-8 py-4 text-right text-[10px] font-bold text-secondary-400 uppercase tracking-widest">Action</th>
                         </tr>
@@ -76,6 +77,18 @@
                                     <div class="text-sm font-bold text-secondary-600">{{ $application->created_at->format('M d, Y') }}</div>
                                 </td>
                                 <td class="px-8 py-5 whitespace-nowrap">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-full bg-secondary-100 rounded-full h-1.5 w-24 overflow-hidden">
+                                            @php
+                                                $progress = $application->documents_count > 0 ? ($application->approved_documents_count / 19) * 100 : 0;
+                                            @endphp
+                                            <div class="bg-primary-500 h-1.5 rounded-full" style="width: {{ $progress }}%"></div>
+                                        </div>
+                                        <span class="text-xs font-bold text-secondary-700">{{ $application->documents_count }}/19</span>
+                                    </div>
+                                    <div class="text-[10px] font-medium text-secondary-400 mt-1">{{ $application->approved_documents_count }} approved</div>
+                                </td>
+                                <td class="px-8 py-5 whitespace-nowrap">
                                      @php
                                         $statusColors = [
                                             'Pending' => 'bg-amber-100 text-amber-700',
@@ -94,7 +107,7 @@
                                     </span>
                                 </td>
                                 <td class="px-8 py-5 whitespace-nowrap text-right">
-                                    <a href="{{ route('staff.applications.edit', $application) }}" class="btn-primary py-2 shadow-none hover:shadow-primary-600/20">Manage</a>
+                                    <a href="{{ route('staff.applications.review', $application) }}" class="btn-primary py-2 shadow-none hover:shadow-primary-600/20">Review</a>
                                 </td>
                             </tr>
                         @endforeach

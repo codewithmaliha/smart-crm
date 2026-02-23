@@ -33,22 +33,28 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
     Route::resource('universities', \App\Http\Controllers\Admin\UniversityController::class);
     Route::resource('courses', \App\Http\Controllers\Admin\CourseController::class);
+    Route::resource('staff', \App\Http\Controllers\Admin\AdminStaffController::class);
 });
 
 // Staff Routes
 Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->group(function () {
     Route::get('/dashboard', [StaffController::class, 'index'])->name('dashboard');
     Route::get('/universities', [StaffController::class, 'universities'])->name('universities.index');
-    Route::get('/applications/{application}/edit', [StaffController::class, 'edit'])->name('applications.edit');
-    Route::put('/applications/{application}', [StaffController::class, 'update'])->name('applications.update');
+    Route::get('/applications/{application}/review', [\App\Http\Controllers\Staff\StaffApplicationController::class, 'review'])->name('applications.review');
+    Route::post('/applications/{application}/documents/{document}/approve', [\App\Http\Controllers\Staff\StaffApplicationController::class, 'approveDocument'])->name('applications.documents.approve');
+    Route::post('/applications/{application}/documents/{document}/reject', [\App\Http\Controllers\Staff\StaffApplicationController::class, 'rejectDocument'])->name('applications.documents.reject');
+    Route::post('/applications/{application}/offer-letter', [\App\Http\Controllers\Staff\StaffApplicationController::class, 'uploadOfferLetter'])->name('applications.offer-letter');
 });
 
 // Student Routes
 Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')->group(function () {
     Route::get('/dashboard', [StudentController::class, 'index'])->name('courses.index');
     Route::get('/universities', [StudentController::class, 'universities'])->name('universities.index');
-    Route::post('/apply/{course}', [StudentController::class, 'apply'])->name('apply');
+    Route::get('/apply/{course}', [StudentController::class, 'apply'])->name('apply');
+    Route::post('/apply/{course}', [StudentController::class, 'storeApplication'])->name('apply.store');
     Route::get('/my-applications', [StudentController::class, 'myApplications'])->name('applications.index');
+    Route::get('/applications/{application}', [StudentController::class, 'showApplication'])->name('applications.show');
+    Route::post('/applications/{application}/upload', [StudentController::class, 'uploadDocument'])->name('applications.upload');
 });
 
 require __DIR__.'/auth.php';

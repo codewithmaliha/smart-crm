@@ -99,12 +99,9 @@
                                     </div>
                                 </div>
 
-                                <form action="{{ route('student.apply', $course) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="w-full btn-primary py-4 text-sm font-bold tracking-wide shadow-primary-600/30 hover:shadow-primary-600/50">
-                                        Apply for Admission
-                                    </button>
-                                </form>
+                                <a href="{{ route('student.apply', $course) }}" class="w-full btn-primary py-4 text-sm font-bold tracking-wide shadow-primary-600/30 hover:shadow-primary-600/50 block text-center">
+                                    Apply for Admission
+                                </a>
                             </div>
                         </div>
                     @endforeach
