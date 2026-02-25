@@ -15,7 +15,7 @@
                     </div>
                     <div>
                         <h4 class="text-xl font-black tracking-tight">Workflow Status Guide</h4>
-                        <p class="text-blue-100 text-sm font-medium opacity-90 max-w-xl">Approving all 19 mandatory documents will automatically transition this application to <strong class="text-white">"Submitted to Uni"</strong>, unlocking the Offer Letter upload section.</p>
+                        <p class="text-blue-100 text-sm font-medium opacity-90 max-w-xl">Approving all {{ count($application->getRequiredDocuments()) }} mandatory documents will automatically transition this application to <strong class="text-white">"Submitted to Uni"</strong>, unlocking the Offer Letter upload section.</p>
                     </div>
                 </div>
                 <div class="hidden lg:block">

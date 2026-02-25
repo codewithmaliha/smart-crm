@@ -61,11 +61,12 @@
                                     <div class="flex items-center gap-2">
                                         <div class="w-24 bg-secondary-100 rounded-full h-1.5 overflow-hidden">
                                             @php
-                                                $progress = ($application->approved_documents_count / 19) * 100;
+                                                $requiredCount = count($application->getRequiredDocuments());
+                                                $progress = $requiredCount > 0 ? ($application->approved_documents_count / $requiredCount) * 100 : 0;
                                             @endphp
                                             <div class="bg-primary-500 h-1.5 rounded-full transition-all duration-1000" style="width: {{ $progress }}%"></div>
                                         </div>
-                                        <span class="text-[10px] font-bold text-secondary-600">{{ $application->documents_count }}/19</span>
+                                        <span class="text-[10px] font-bold text-secondary-600">{{ $application->approved_documents_count }}/{{ $requiredCount }}</span>
                                     </div>
                                 </td>
                                 <td class="px-8 py-6 whitespace-nowrap">

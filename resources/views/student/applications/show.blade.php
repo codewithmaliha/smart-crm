@@ -168,8 +168,8 @@
                 </div>
             </div>
 
-            <!-- Tuition Fee & Offer Letter (Conditional / Locked States) -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Offer Letter (Conditional / Locked States) -->
+            <div class="w-full">
                 <!-- Offer Letter -->
                 <div class="bg-white p-8 rounded-[2rem] shadow-xl shadow-secondary-200/40 border border-secondary-100 relative overflow-hidden group">
                     @if(!($application->status == 'Submitted to Uni' || $application->status == 'Offer Received' || $application->status == 'Visa Process' || $application->status == 'Enrolled'))
@@ -191,13 +191,20 @@
                     </div>
                     
                     @if($application->offer_letter)
-                        <div class="p-6 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-4">
-                            <div class="p-3 bg-white rounded-xl shadow-sm">
-                                <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="mt-4 flex flex-col h-full space-y-4">
+                            <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 bg-white rounded-lg shadow-sm">
+                                        <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    </div>
+                                    <p class="text-sm font-bold text-emerald-900">University Offer Issued</p>
+                                </div>
+                                <a href="{{ route('student.applications.preview-offer', $application) }}" target="_blank" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition">Open in New Tab &rarr;</a>
                             </div>
-                            <div>
-                                <p class="text-sm font-bold text-emerald-900">University Offer Issued</p>
-                                <a href="{{ Storage::url($application->offer_letter) }}" target="_blank" class="text-emerald-600 text-xs font-bold hover:underline">Download Letter &rarr;</a>
+                            
+                            <!-- Display the letter directly -->
+                            <div class="w-full bg-secondary-100 rounded-xl overflow-hidden border border-secondary-200 mt-4 text-center">
+                                <iframe src="{{ route('student.applications.preview-offer', $application) }}" class="w-full border-0" style="min-height: 800px; height: 80vh;" title="Offer Letter"></iframe>
                             </div>
                         </div>
                     @else
@@ -210,53 +217,7 @@
                     @endif
                 </div>
 
-                <!-- Tuition Fee -->
-                <div class="bg-white p-8 rounded-[2rem] shadow-xl shadow-secondary-200/40 border border-secondary-100 relative overflow-hidden group">
-                    @if(!($application->status == 'Offer Received' || $application->status == 'Visa Process' || $application->status == 'Enrolled'))
-                        <!-- Locked Overlay -->
-                        <div class="absolute inset-0 bg-secondary-50/60 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center text-center p-6">
-                            <div class="p-3 bg-white rounded-2xl shadow-sm mb-4">
-                                <svg class="w-8 h-8 text-secondary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                            </div>
-                            <h4 class="text-sm font-black text-secondary-900 uppercase tracking-widest">Stage Locked</h4>
-                            <p class="text-[10px] font-bold text-secondary-500 mt-2">Unlocks after you receive an official Offer Letter.</p>
-                        </div>
-                    @endif
 
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="p-2 bg-amber-100 text-amber-600 rounded-lg">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                        </div>
-                        <h3 class="font-bold text-lg text-secondary-900">Tuition Fee Payment</h3>
-                    </div>
-                    
-                    @php $feeReceipt = $application->documents->where('name', 'Fee Receipt')->first(); @endphp
-                    
-                    @if(!$feeReceipt)
-                        <div class="bg-amber-50 p-4 rounded-xl mb-6 text-xs font-bold text-amber-800 border-l-4 border-amber-400">
-                            ACTION REQUIRED: Please use the bank details provided in your offer letter and upload the receipt here.
-                        </div>
-                        <form action="{{ route('student.applications.upload', $application) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
-                            @csrf
-                            <input type="hidden" name="document_name" value="Fee Receipt">
-                            <label class="block">
-                                <span class="text-[10px] font-bold text-secondary-400 uppercase tracking-widest mb-2 block">Upload Receipt (PDF/ZIP)</span>
-                                <input type="file" name="document_file" class="block w-full text-xs text-secondary-500 border border-secondary-200 rounded-xl p-3 focus:ring-amber-500 focus:border-amber-500" required>
-                            </label>
-                            <button type="submit" class="w-full bg-amber-600 text-white text-[10px] font-bold uppercase tracking-widest py-3 rounded-xl hover:bg-amber-700 transition-colors shadow-lg shadow-amber-600/20">Submit Payment Proof</button>
-                        </form>
-                    @else
-                        <div class="p-6 bg-amber-50 rounded-2xl border border-amber-100 flex items-center gap-4">
-                            <div class="p-3 bg-white rounded-xl shadow-sm">
-                                <svg class="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            </div>
-                            <div>
-                                <p class="text-sm font-bold text-amber-900">Receipt Submitted</p>
-                                <span class="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Verification Pending</span>
-                            </div>
-                        </div>
-                    @endif
-                </div>
             </div>
         </div>
     </div>

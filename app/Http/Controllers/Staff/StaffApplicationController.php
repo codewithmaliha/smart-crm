@@ -50,13 +50,25 @@ class StaffApplicationController extends Controller
             'status' => 'Offer Received'
         ]);
 
+        $application->load('course.university', 'user');
+
+        // Notify the student about their offer letter
+        if ($application->user) {
+            \Illuminate\Support\Facades\Mail::to($application->user)->send(new \App\Mail\OfferLetterReceived($application));
+        }
+
         return redirect()->back()->with('success', 'Offer letter uploaded and student notified.');
     }
 
     private function checkAllApproved(Application $application)
     {
-        $requiredCount = 19; // From the list provided in prompt
-        $approvedCount = $application->documents()->where('status', 'Approved')->count();
+        $requiredDocs = $application->getRequiredDocuments();
+        $requiredCount = count($requiredDocs);
+        
+        $approvedCount = $application->documents()
+            ->whereIn('name', $requiredDocs)
+            ->where('status', 'Approved')
+            ->count();
 
         if ($approvedCount >= $requiredCount) {
             $application->update(['status' => 'Submitted to Uni']);

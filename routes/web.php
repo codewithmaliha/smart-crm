@@ -49,11 +49,13 @@ Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->grou
 // Student Routes
 Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')->group(function () {
     Route::get('/dashboard', [StudentController::class, 'index'])->name('courses.index');
+    Route::post('/preferences', [StudentController::class, 'storePreferences'])->name('preferences.store');
     Route::get('/universities', [StudentController::class, 'universities'])->name('universities.index');
     Route::get('/apply/{course}', [StudentController::class, 'apply'])->name('apply');
     Route::post('/apply/{course}', [StudentController::class, 'storeApplication'])->name('apply.store');
     Route::get('/my-applications', [StudentController::class, 'myApplications'])->name('applications.index');
     Route::get('/applications/{application}', [StudentController::class, 'showApplication'])->name('applications.show');
+    Route::get('/applications/{application}/preview-offer', [StudentController::class, 'previewOffer'])->name('applications.preview-offer');
     Route::post('/applications/{application}/upload', [StudentController::class, 'uploadDocument'])->name('applications.upload');
 });
 

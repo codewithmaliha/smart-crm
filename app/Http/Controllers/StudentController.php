@@ -35,7 +35,68 @@ class StudentController extends Controller
         $courses = $query->get();
         $selectedUniversity = $selectedUniversity ?? null;
 
-        return view('student.dashboard', compact('courses', 'selectedUniversity'));
+        // --- AI Recommendation Engine ---
+        $user = Auth::user();
+        $pastApplications = \App\Models\Application::where('user_id', $user->id)->pluck('course_id')->toArray();
+        
+        $recommendationQuery = Course::with('university')->whereNotIn('id', $pastApplications);
+        
+        $hasPreferences = false;
+        if (!empty($user->preferences)) {
+            $hasPreferences = true;
+            $recommendationQuery->where(function($q) use ($user) {
+                if (!empty($user->preferences['level'])) {
+                    $q->where('level', $user->preferences['level']);
+                }
+                if (!empty($user->preferences['intake'])) {
+                    $q->orWhere('intake', $user->preferences['intake']);
+                }
+            });
+        } elseif (!empty($pastApplications)) {
+            // Find patterns in user's past applications to recommend similar ones
+            $appliedCourses = Course::whereIn('id', $pastApplications)->get();
+            $preferredLevels = $appliedCourses->pluck('level')->unique()->toArray();
+            $preferredIntakes = $appliedCourses->pluck('intake')->unique()->toArray();
+            
+            $recommendationQuery->where(function($q) use ($preferredLevels, $preferredIntakes) {
+                $q->whereIn('level', $preferredLevels)
+                  ->orWhereIn('intake', $preferredIntakes);
+            });
+        }
+        
+        // Get top 3 intelligent matches, fallback to random 3 if nothing strictly matches
+        $recommendedCourses = $recommendationQuery->inRandomOrder()->take(3)->get();
+        if ($recommendedCourses->count() < 3) {
+            $filler = Course::with('university')
+                ->whereNotIn('id', array_merge($pastApplications, $recommendedCourses->pluck('id')->toArray()))
+                ->inRandomOrder()
+                ->take(3 - $recommendedCourses->count())
+                ->get();
+            $recommendedCourses = $recommendedCourses->merge($filler);
+        }
+        
+        // Let the view know if AI can't generate specific recommendations
+        $needsPreferences = !$hasPreferences && empty($pastApplications);
+
+        return view('student.dashboard', compact('courses', 'selectedUniversity', 'recommendedCourses', 'needsPreferences', 'user'));
+    }
+
+    public function storePreferences(Request $request)
+    {
+        $request->validate([
+            'level' => 'nullable|string',
+            'intake' => 'nullable|string',
+        ]);
+
+        $user = Auth::user();
+        $user->update([
+            'preferences' => [
+                'level' => $request->level,
+                'intake' => $request->intake,
+            ]
+        ]);
+
+        return redirect()->back()->with('success', 'Preferences updated successfully! AI recommendations refreshed.');
     }
 
     public function apply(Course $course)
@@ -87,6 +148,14 @@ class StudentController extends Controller
             'passing_year' => $request->passing_year,
         ]);
 
+        $application->load('course.university');
+        
+        // Notify all staff members about the new application
+        $staffMembers = \App\Models\User::where('role', 'staff')->get();
+        if ($staffMembers->isNotEmpty()) {
+            \Illuminate\Support\Facades\Mail::to($staffMembers)->send(new \App\Mail\NewApplicationReceived($application));
+        }
+
         return redirect()->route('student.applications.show', $application)->with('success', 'Details saved. Please upload the required documents.');
     }
 
@@ -98,29 +167,38 @@ class StudentController extends Controller
 
         $application->load('documents', 'course.university');
         
-        $requiredDocuments = [
-            'Passport', 'Passport-size Photo', 'Intermediate Certificate',
-            'Intermediate Result Card', 'Matriculation Certificate', 'Matriculation Result Card',
-            'Medium of Instruction (MOI)', 'CV', 'Experience Letter', 'Supporting Document 1',
-            'Supporting Document 2', 'Supporting Document 3', 'Supporting Document 4',
-            'Supporting Document 5', 'Fee Receipt'
-        ];
-
-        // Conditional documents based on course level
-        $courseLevel = strtolower($application->course->level);
+        $requiredDocuments = $application->getRequiredDocuments();
         
-        if (str_contains($courseLevel, 'master') || str_contains($courseLevel, 'postgraduate')) {
-            // If applying for Master, don't ask for Master's degree (they don't have it yet), but DO ask for Bachelor's
-            array_splice($requiredDocuments, 2, 0, ["Bachelor's Degree", "Bachelor's Transcript"]);
-        } elseif (str_contains($courseLevel, 'bachelor') || str_contains($courseLevel, 'undergraduate')) {
-            // If applying for Bachelor, don't ask for Bachelor's degree
-            // Intermediate is already in the list
-        } else {
-            // Default: include both if not clearly undergraduate
-            array_splice($requiredDocuments, 2, 0, ["Master's Degree", "Master's Transcript", "Bachelor's Degree", "Bachelor's Transcript"]);
+        return view('student.applications.show', compact('application', 'requiredDocuments'));
+    }
+
+    public function previewOffer(Application $application)
+    {
+        if ($application->user_id !== Auth::id()) {
+            abort(403);
         }
 
-        return view('student.applications.show', compact('application', 'requiredDocuments'));
+        $offerPath = $application->offer_letter;
+
+        if (!$offerPath) {
+            abort(404, 'Offer letter not found in application record.');
+        }
+
+        // 1. Try public disk
+        if (Storage::disk('public')->exists($offerPath)) {
+            return Storage::disk('public')->response($offerPath);
+        }
+
+        // 2. Try testing path/missing edge conditions
+        if (file_exists(public_path('storage/' . $offerPath))) {
+            return response()->file(public_path('storage/' . $offerPath));
+        }
+        
+        if (file_exists(storage_path('app/public/' . $offerPath))) {
+            return response()->file(storage_path('app/public/' . $offerPath));
+        }
+
+        abort(404, 'Offer letter file not physically found.');
     }
 
     public function uploadDocument(Request $request, Application $application)
